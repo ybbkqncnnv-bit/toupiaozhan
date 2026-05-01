@@ -1,606 +1,574 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小黄的投票站</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            primary: '#FFD700',
-            secondary: '#FF9800',
-            success: '#4CAF50',
-            danger: '#F44336',
-            light: '#F8F9FA',
-            dark: '#333333'
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小黄的投票站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FFD700',
+                        secondary: '#FF9800',
+                        danger: '#FF4444',
+                        dark: '#1A1A1A',
+                        light: '#F5F5F5'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
         }
-      }
-    }
-  </script>
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .btn-primary { @apply bg-primary text-dark font-medium py-2 px-4 rounded-lg hover:shadow-lg transition-all; }
-      .btn-danger { @apply bg-danger text-white font-medium py-2 px-4 rounded-lg hover:shadow-lg transition-all; }
-      .btn-outline { @apply border border-primary py-2 px-4 rounded-lg hover:bg-primary/20 transition-all; }
-      .input-field { @apply w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary; }
-      .card-hover { @apply hover:shadow-lg hover:-translate-y-1 transition-all; }
-    }
-  </style>
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .btn-primary {
+                @apply bg-primary text-black px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition-all shadow-md;
+            }
+            .btn-secondary {
+                @apply bg-secondary text-white px-4 py-2 rounded-lg font-semibold hover:bg-orange-500 transition-all shadow-md;
+            }
+            .btn-danger {
+                @apply bg-danger text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-500 transition-all shadow-md;
+            }
+            .input-field {
+                @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary;
+            }
+            .card {
+                @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-all hover:shadow-xl;
+            }
+            .badge {
+                @apply px-2 py-1 rounded-full text-xs font-bold;
+            }
+        }
+    </style>
 </head>
-<body class="bg-light min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
-
-<!-- 导航栏 -->
-<nav class="bg-white shadow-md sticky top-0 z-50 dark:bg-gray-800">
-  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-    <h1 class="text-2xl font-bold text-dark dark:text-white">小黄的投票站</h1>
-    <div class="flex items-center gap-3">
-      <button id="createVoteBtn" class="btn-primary"><i class="fa fa-plus mr-1"></i>发起投票</button>
-      <div id="authButtons">
-        <button id="loginBtn" class="btn-outline">登录</button>
-        <button id="registerBtn" class="btn-primary">注册</button>
-      </div>
-      <div id="userProfile" class="hidden relative">
-        <button id="userMenuBtn" class="flex items-center gap-1">
-          <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center font-bold" id="userInitial">黄</div>
-          <span id="userName" class="dark:text-white">管理员</span>
-          <i class="fa fa-caret-down"></i>
-        </button>
-        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-20 dark:bg-gray-800">
-          <a href="#" id="settingsBtn" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><i class="fa fa-cog mr-1"></i>设置</a>
-          <a href="#" id="adminPanelBtn" class="hidden px-4 py-2 hover:bg-gray-100 text-danger dark:hover:bg-gray-700"><i class="fa fa-cog mr-1"></i>管理后台</a>
-          <a href="#" id="logoutBtn" class="px-4 py-2 hover:bg-gray-100 text-danger dark:hover:bg-gray-700"><i class="fa fa-sign-out mr-1"></i>退出登录</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</nav>
-
-<main class="flex-grow container mx-auto px-4 py-6">
-  <div id="appViews">
-    
-    <!-- 首页 -->
-    <div id="homeView">
-      <!-- 网站简介 -->
-      <div class="bg-white rounded-xl shadow-md p-6 mb-6 text-center dark:bg-gray-800">
-        <h2 class="text-xl font-bold mb-2">这里是黄计策的小小投票站</h2>
-        <p class="text-gray-600 dark:text-gray-300">欢迎大家投票，公平公正，公开透明！</p>
-      </div>
-
-      <!-- 在线用户 -->
-      <div id="onlineUsersPanel" class="bg-white rounded-xl shadow-md p-4 mb-6 dark:bg-gray-800">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="font-bold"><i class="fa fa-users text-success mr-1"></i> 在线用户</h3>
-          <span class="text-sm bg-success/20 text-success px-2 py-1 rounded" id="onlineCount">0 人在线</span>
-        </div>
-        <div id="onlineList" class="flex flex-wrap gap-2"></div>
-      </div>
-
-      <h2 class="text-xl font-bold mb-4">全部投票</h2>
-      <div id="voteList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-    </div>
-
-    <!-- 创建投票 -->
-    <div id="createVoteView" class="hidden">
-      <h2 class="text-xl font-bold mb-4">发起投票</h2>
-      <div class="bg-white p-6 rounded-xl shadow max-w-2xl mx-auto dark:bg-gray-800">
-        <input id="voteTitle" class="input-field mb-3 dark:bg-gray-700 dark:border-gray-600" placeholder="投票标题" required>
-        <textarea id="voteDesc" class="input-field mb-3 dark:bg-gray-700 dark:border-gray-600" placeholder="投票描述"></textarea>
-        <div class="mb-3">
-          <label>投票选项（可传图片）</label>
-          <div id="optionItems">
-            <div class="flex gap-2 mb-2">
-              <input class="input-field optionText dark:bg-gray-700 dark:border-gray-600" placeholder="选项1">
-              <input type="file" class="optionImg hidden" accept="image/*">
-              <button class="btn-outline imgUploadBtn"><i class="fa fa-image"></i></button>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
+    <div id="app" class="flex flex-col min-h-screen">
+        <!-- 导航栏 -->
+        <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-bar-chart text-primary text-2xl"></i>
+                        <h1 class="text-xl font-bold">小黄的投票站</h1>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <i class="fa fa-moon-o dark:hidden"></i>
+                            <i class="fa fa-sun-o hidden dark:inline"></i>
+                        </button>
+                        
+                        <div id="userInfo" class="hidden items-center space-x-3">
+                            <span id="welcomeText" class="hidden md:inline"></span>
+                            <button id="adminBtn" class="hidden btn-secondary px-3 py-1 text-sm">管理后台</button>
+                            <button id="logoutBtn" class="btn-danger px-3 py-1 text-sm">退出</button>
+                        </div>
+                        
+                        <div id="authButtons" class="flex items-center space-x-2">
+                            <button id="loginBtn" class="btn-primary px-3 py-1 text-sm">登录</button>
+                            <button id="registerBtn" class="btn-secondary px-3 py-1 text-sm">注册</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="flex gap-2 mb-2">
-              <input class="input-field optionText dark:bg-gray-700 dark:border-gray-600" placeholder="选项2">
-              <input type="file" class="optionImg hidden" accept="image/*">
-              <button class="btn-outline imgUploadBtn"><i class="fa fa-image"></i></button>
+        </nav>
+
+        <!-- 在线用户 -->
+        <div class="bg-white dark:bg-gray-800 shadow-sm py-2">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-users text-primary"></i>
+                        <span>在线用户: <span id="onlineCount">0</span></span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span id="onlineUsersList" class="text-sm text-gray-600 dark:text-gray-400"></span>
+                    </div>
+                </div>
             </div>
-          </div>
-          <button id="addOption" class="text-primary mt-1">+ 添加选项</button>
         </div>
-        <div class="flex gap-3 mb-3">
-          <label class="flex items-center"><input type="checkbox" id="isMultiple"> 多选投票</label>
-          <input type="datetime-local" id="deadline" class="input-field flex-1 dark:bg-gray-700 dark:border-gray-600">
-        </div>
-        <div class="flex gap-2">
-          <button id="cancelCreate" class="btn-outline flex-1">取消</button>
-          <button id="submitCreateVote" class="btn-primary flex-1">创建投票</button>
-        </div>
-      </div>
+
+        <!-- 主要内容 -->
+        <main class="flex-grow container mx-auto px-4 py-6">
+            <!-- 首页 -->
+            <div id="homeView" class="view block">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">最新投票</h2>
+                    <button id="createVoteBtn" class="btn-primary">
+                        <i class="fa fa-plus mr-2"></i>发起投票
+                    </button>
+                </div>
+                
+                <div id="votesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="col-span-full text-center py-10">
+                        <i class="fa fa-bar-chart text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-500">暂无投票，点击上方发起第一个投票</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 创建投票 -->
+            <div id="createVoteView" class="view hidden">
+                <div class="max-w-2xl mx-auto card">
+                    <h2 class="text-2xl font-bold mb-6">发起投票</h2>
+                    <form id="createVoteForm">
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">标题</label>
+                            <input type="text" id="voteTitle" class="input-field" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">描述</label>
+                            <textarea id="voteDesc" class="input-field h-24"></textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">选项</label>
+                            <div id="voteOptions">
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" class="input-field option-input" placeholder="选项 1" required>
+                                    <button type="button" class="btn-secondary add-option">+</button>
+                                </div>
+                                <div class="flex gap-2 mb-2">
+                                    <input type="text" class="input-field option-input" placeholder="选项 2" required>
+                                    <button type="button" class="btn-danger remove-option">-</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">类型</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="voteType" value="single" checked class="mr-2">
+                                    <span>单选</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="voteType" value="multiple" class="mr-2">
+                                    <span>多选</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">截止时间</label>
+                            <input type="datetime-local" id="voteDeadline" class="input-field">
+                        </div>
+                        
+                        <div class="flex gap-4 justify-end">
+                            <button type="button" id="cancelCreateBtn" class="btn-secondary">取消</button>
+                            <button type="submit" class="btn-primary">发布投票</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 投票详情 -->
+            <div id="voteDetailView" class="view hidden">
+                <div class="max-w-2xl mx-auto card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="detailTitle" class="text-2xl font-bold"></h2>
+                        <button id="closeDetailBtn" class="btn-danger px-3 py-1">关闭</button>
+                    </div>
+                    <div id="voteDetailContent"></div>
+                </div>
+            </div>
+
+            <!-- 登录 -->
+            <div id="loginView" class="view hidden">
+                <div class="max-w-md mx-auto card">
+                    <h2 class="text-2xl font-bold mb-6 text-center">登录</h2>
+                    <form id="loginForm">
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">用户名</label>
+                            <input type="text" id="loginUsername" class="input-field" required>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block mb-2 font-semibold">密码</label>
+                            <input type="password" id="loginPassword" class="input-field" required>
+                        </div>
+                        <button type="submit" class="btn-primary w-full mb-4">登录</button>
+                        <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                            没有账号？<button type="button" id="goToRegisterBtn" class="text-primary">注册</button>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 注册 -->
+            <div id="registerView" class="view hidden">
+                <div class="max-w-md mx-auto card">
+                    <h2 class="text-2xl font-bold mb-6 text-center">注册</h2>
+                    <form id="registerForm">
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">用户名</label>
+                            <input type="text" id="registerUsername" class="input-field" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">真实姓名</label>
+                            <input type="text" id="registerRealName" class="input-field" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">密码</label>
+                            <input type="password" id="registerPassword" class="input-field" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block mb-2 font-semibold">身份</label>
+                            <select id="registerRole" class="input-field">
+                                <option value="user">普通用户</option>
+                                <option value="vip">VIP用户</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                        <div id="adminCodeGroup" class="mb-4 hidden">
+                            <label class="block mb-2 font-semibold">管理员密码</label>
+                            <input type="password" id="adminCode" class="input-field">
+                        </div>
+                        <div id="vipCodeGroup" class="mb-4 hidden">
+                            <label class="block mb-2 font-semibold">VIP邀请码</label>
+                            <input type="text" id="vipCode" class="input-field">
+                        </div>
+                        <button type="submit" class="btn-primary w-full mb-4">注册</button>
+                        <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                            已有账号？<button type="button" id="goToLoginBtn" class="text-primary">登录</button>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 管理后台 -->
+            <div id="adminView" class="view hidden">
+                <div class="card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">管理后台</h2>
+                        <button id="closeAdminBtn" class="btn-danger">关闭</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">用户管理</h3>
+                            <div id="adminUsersList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold mb-4">投票管理</h3>
+                            <div id="adminVotesList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部 -->
+        <footer class="bg-white dark:bg-gray-800 shadow-md py-4 mt-6">
+            <div class="container mx-auto px-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                <p>© 2025 小黄的投票站 | 安全、简单、高效</p>
+            </div>
+        </footer>
     </div>
 
-    <!-- 投票详情 -->
-    <div id="voteDetailView" class="hidden">
-      <button id="backToList" class="mb-3 text-primary"><i class="fa fa-arrow-left"></i> 返回</button>
-      <div class="bg-white p-6 rounded-xl shadow dark:bg-gray-800">
-        <h2 id="detailTitle" class="text-xl font-bold mb-2"></h2>
-        <p id="detailDesc" class="text-gray-600 dark:text-gray-300 mb-4"></p>
-        <div id="voteOptionArea" class="space-y-3 mb-4"></div>
-        <button id="deleteVoteBtn" class="btn-danger hidden"><i class="fa fa-trash mr-1"></i>删除投票</button>
-        <button id="submitMyVote" class="btn-primary w-full mt-3">提交投票</button>
-        <button id="commentBtn" class="btn-outline w-full mt-2"><i class="fa fa-comment mr-1"></i>发表评论</button>
-      </div>
+    <!-- 提示框 -->
+    <div id="toast" class="fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-transform duration-300 translate-x-full"></div>
 
-      <!-- 评论区 -->
-      <div class="bg-white p-4 rounded-xl shadow mt-4 dark:bg-gray-800">
-        <h3 class="font-bold mb-2">评论区</h3>
-        <div id="commentInputArea" class="mb-3 hidden">
-          <textarea id="commentText" class="input-field w-full dark:bg-gray-700 dark:border-gray-600" rows="2" placeholder="写下你的评论..."></textarea>
-          <button id="submitComment" class="btn-primary mt-2">发布评论</button>
-        </div>
-        <div id="commentList" class="space-y-2 max-h-60 overflow-y-auto"></div>
-      </div>
-    </div>
+    <script>
+        // 全局变量
+        let currentUser = null;
+        let users = JSON.parse(localStorage.getItem('users')) || [
+            { id: 'u1', username: 'admin', realName: '管理员', pwd: 'admin', role: 'admin', isAdmin: true }
+        ];
+        let votes = JSON.parse(localStorage.getItem('votes')) || [];
+        let comments = JSON.parse(localStorage.getItem('comments')) || [];
+        let onlineUsers = [];
 
-    <!-- 登录 -->
-    <div id="loginView" class="hidden max-w-md mx-auto bg-white p-6 rounded-xl shadow dark:bg-gray-800">
-      <h2 class="text-xl font-bold mb-4">登录</h2>
-      <input id="loginUser" class="input-field mb-3 dark:bg-gray-700 dark:border-gray-600" placeholder="用户名">
-      <input type="password" id="loginPwd" class="input-field mb-3 dark:bg-gray-700 dark:border-gray-600" placeholder="密码">
-      <button id="doLogin" class="btn-primary w-full">登录</button>
-      <p class="text-center mt-3">没有账号？<span id="goRegister" class="text-primary cursor-pointer">立即注册</span></p>
-    </div>
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            initEventListeners();
+            initOnlineStatus();
+            updateUI();
+            renderVotes();
+        });
 
-    <!-- 注册 -->
-    <div id="registerView" class="hidden max-w-md mx-auto bg-white p-6 rounded-xl shadow dark:bg-gray-800">
-      <h2 class="text-xl font-bold mb-4">注册（实名）</h2>
-      <input id="regUser" class="input-field mb-2 dark:bg-gray-700 dark:border-gray-600" placeholder="用户名">
-      <input id="regRealName" class="input-field mb-2 dark:bg-gray-700 dark:border-gray-600" placeholder="真实姓名（必填）">
-      <input type="password" id="regPwd" class="input-field mb-2 dark:bg-gray-700 dark:border-gray-600" placeholder="密码">
-      <select id="regRole" class="input-field mb-2 dark:bg-gray-700 dark:border-gray-600">
-        <option value="普通用户">普通用户</option>
-        <option value="VIP用户">VIP用户</option>
-        <option value="管理员">管理员</option>
-      </select>
-      <input id="adminPwd" placeholder="管理员密码" class="input-field mb-2 hidden dark:bg-gray-700 dark:border-gray-600">
-      <input id="vipCode" placeholder="VIP邀请码" class="input-field mb-2 hidden dark:bg-gray-700 dark:border-gray-600">
-      <button id="doRegister" class="btn-primary w-full">注册</button>
-      <p class="text-center mt-3">已有账号？<span id="goLogin" class="text-primary cursor-pointer">立即登录</span></p>
-    </div>
+        // 主题切换
+        function initTheme() {
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) document.documentElement.classList.add('dark');
+        }
 
-    <!-- 设置 -->
-    <div id="settingsView" class="hidden max-w-2xl mx-auto bg-white p-6 rounded-xl shadow dark:bg-gray-800">
-      <h2 class="text-xl font-bold mb-4">设置中心</h2>
-      <div class="space-y-4">
-        <div>
-          <label class="font-medium">深色模式</label>
-          <button id="darkModeToggle" class="ml-2 px-3 py-1 border rounded">切换</button>
-        </div>
-        <div>
-          <label class="font-medium">VIP 邀请码</label>
-          <input id="inputVipCode" class="input-field mt-1 dark:bg-gray-700 dark:border-gray-600" placeholder="输入邀请码升级">
-          <button id="applyVip" class="btn-primary mt-2">立即激活</button>
-        </div>
-        <div>
-          <label class="font-medium">意见反馈</label>
-          <textarea id="feedbackText" class="input-field mt-1 dark:bg-gray-700 dark:border-gray-600" rows="3" placeholder="请写下你的建议..."></textarea>
-          <button id="submitFeedback" class="btn-primary mt-2">提交反馈</button>
-        </div>
-      </div>
-      <button id="backFromSettings" class="btn-outline mt-6 w-full">返回首页</button>
-    </div>
+        // 事件监听
+        function initEventListeners() {
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            document.getElementById('loginBtn').addEventListener('click', () => showView('loginView'));
+            document.getElementById('registerBtn').addEventListener('click', () => showView('registerView'));
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('createVoteBtn').addEventListener('click', () => showView('createVoteView'));
+            document.getElementById('cancelCreateBtn').addEventListener('click', () => showView('homeView'));
+            document.getElementById('closeDetailBtn').addEventListener('click', () => showView('homeView'));
+            document.getElementById('closeAdminBtn').addEventListener('click', () => showView('homeView'));
+            document.getElementById('goToRegisterBtn').addEventListener('click', () => showView('registerView'));
+            document.getElementById('goToLoginBtn').addEventListener('click', () => showView('loginView'));
+            document.getElementById('adminBtn').addEventListener('click', () => showView('adminView'));
 
-    <!-- 管理员后台 -->
-    <div id="adminView" class="hidden">
-      <button id="backFromAdmin" class="mb-3 text-primary"><i class="fa fa-arrow-left"></i> 返回</button>
-      <h2 class="text-xl font-bold text-danger mb-4">管理员后台</h2>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-4 rounded-xl shadow dark:bg-gray-800">
-          <h3 class="font-bold mb-2">所有用户</h3>
-          <div id="adminUserList" class="max-h-60 overflow-y-auto"></div>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow dark:bg-gray-800">
-          <h3 class="font-bold mb-2">所有投票（可删除）</h3>
-          <div id="adminVoteList" class="max-h-60 overflow-y-auto"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</main>
+            // 表单
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            document.getElementById('createVoteForm').addEventListener('submit', handleCreateVote);
 
-<footer class="bg-white p-4 text-center text-gray-500 dark:bg-gray-800 dark:text-gray-400">小黄的投票站 © 2025</footer>
-<div id="toast" class="fixed bottom-4 right-4 px-4 py-2 rounded-lg bg-dark text-white hidden"></div>
+            // 角色选择
+            document.getElementById('registerRole').addEventListener('change', function() {
+                document.getElementById('adminCodeGroup').classList.add('hidden');
+                document.getElementById('vipCodeGroup').classList.add('hidden');
+                if (this.value === 'admin') document.getElementById('adminCodeGroup').classList.remove('hidden');
+                if (this.value === 'vip') document.getElementById('vipCodeGroup').classList.remove('hidden');
+            });
 
-<script>
-// 全局数据
-let votes = JSON.parse(localStorage.getItem('votes')) || []
-let users = JSON.parse(localStorage.getItem('users')) || [{ id:'admin1', username:'admin', realName:'管理员', pwd:'admin', role:'管理员', isAdmin:true }]
-let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null
-let comments = JSON.parse(localStorage.getItem('comments')) || []
+            // 添加选项
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('add-option')) addOption();
+                if (e.target.classList.contains('remove-option')) removeOption(e.target);
+            });
+        }
 
-// 在线功能
-let onlineUsers = [];
-const ONLINE_KEY = "online_users";
-const HEARTBEAT = 10000;
+        // 切换主题
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark);
+        }
 
-// 工具
-function toast(msg){
-  const t = document.getElementById('toast')
-  t.textContent = msg
-  t.classList.remove('hidden')
-  setTimeout(()=>t.classList.add('hidden'),2000)
-}
-function saveUsers(){ localStorage.setItem('users',JSON.stringify(users)) }
-function saveVotes(){ localStorage.setItem('votes',JSON.stringify(votes)) }
-function saveComments(){ localStorage.setItem('comments',JSON.stringify(comments)) }
-function showView(id){
-  document.querySelectorAll('#appViews > div').forEach(v=>v.classList.add('hidden'))
-  document.getElementById(id).classList.remove('hidden')
-}
+        // 显示视图
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+        }
 
-// 深色模式
-function toggleDark(){
-  document.documentElement.classList.toggle('dark')
-  localStorage.setItem('dark', document.documentElement.classList.contains('dark'))
-}
+        // 登录
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const user = users.find(u => u.username === username && u.pwd === password);
+            if (!user) return showToast('用户名或密码错误', 'danger');
+            
+            currentUser = user;
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            updateUI();
+            showView('homeView');
+            showToast('登录成功', 'primary');
+        }
 
-// 初始化主题
-if(localStorage.getItem('dark') === 'true'){
-  document.documentElement.classList.add('dark')
-}
+        // 注册
+        function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const realName = document.getElementById('registerRealName').value;
+            const password = document.getElementById('registerPassword').value;
+            const role = document.getElementById('registerRole').value;
+            const adminCode = document.getElementById('adminCode').value;
+            const vipCode = document.getElementById('vipCode').value;
 
-// 在线功能
-function initOnline(){
-  if(!currentUser) return
-  addOnlineUser()
-  setInterval(heartbeat, HEARTBEAT)
-  window.addEventListener("beforeunload", removeOnlineUser)
-  window.addEventListener("storage", syncOnline)
-  syncOnline()
-}
+            if (users.some(u => u.username === username)) return showToast('用户名已存在', 'danger');
+            if (role === 'admin' && adminCode !== '525212') return showToast('管理员密码错误', 'danger');
+            if (role === 'vip' && vipCode !== '057712') return showToast('VIP邀请码错误', 'danger');
 
-function addOnlineUser(){
-  let list = JSON.parse(localStorage.getItem(ONLINE_KEY)||'[]')
-  list = list.filter(u=>u.id!==currentUser.id)
-  list.push({id:currentUser.id, name:currentUser.realName, role:currentUser.role, time:Date.now()})
-  localStorage.setItem(ONLINE_KEY, JSON.stringify(list))
-  syncOnline()
-}
+            const newUser = {
+                id: 'u' + Date.now(),
+                username,
+                realName,
+                pwd: password,
+                role: role === 'admin' ? 'admin' : role === 'vip' ? 'vip' : 'user',
+                isAdmin: role === 'admin'
+            };
 
-function removeOnlineUser(){
-  if(!currentUser) return
-  let list = JSON.parse(localStorage.getItem(ONLINE_KEY)||'[]')
-  list = list.filter(u=>u.id!==currentUser.id)
-  localStorage.setItem(ONLINE_KEY, JSON.stringify(list))
-  syncOnline()
-}
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+            showToast('注册成功，请登录', 'primary');
+            showView('loginView');
+        }
 
-function heartbeat(){
-  if(!currentUser) return
-  let list = JSON.parse(localStorage.getItem(ONLINE_KEY)||'[]')
-  let u = list.find(i=>i.id===currentUser.id)
-  if(u) u.time = Date.now()
-  localStorage.setItem(ONLINE_KEY, JSON.stringify(list))
-  syncOnline()
-}
+        // 退出登录
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateUI();
+            showView('homeView');
+            showToast('已退出登录', 'secondary');
+        }
 
-function syncOnline(){
-  let list = JSON.parse(localStorage.getItem(ONLINE_KEY)||'[]')
-  const now = Date.now()
-  list = list.filter(u=>now-u.time<30000)
-  localStorage.setItem(ONLINE_KEY, JSON.stringify(list))
-  onlineUsers = list
-  renderOnline()
-}
+        // 创建投票
+        function handleCreateVote(e) {
+            e.preventDefault();
+            if (!currentUser) return showToast('请先登录', 'danger');
 
-function renderOnline(){
-  const box = document.getElementById('onlineList')
-  const cnt = document.getElementById('onlineCount')
-  if(!box) return
-  cnt.textContent = onlineUsers.length + " 人在线"
-  if(onlineUsers.length===0){
-    box.innerHTML = '<span class="text-gray-400">暂无在线用户</span>'
-    return
-  }
-  box.innerHTML = onlineUsers.map(u=>`
-    <div class="px-2 py-1 bg-gray-100 rounded-full text-sm flex items-center gap-1 dark:bg-gray-700">
-      <span class="w-2 h-2 bg-success rounded-full"></span>
-      ${u.name} ${u.role==='管理员'?'<span class="text-xs text-danger">管</span>':u.role==='VIP用户'?'<span class="text-xs text-secondary">VIP</span>':''}
-    </div>
-  `).join('')
-}
+            const title = document.getElementById('voteTitle').value;
+            const desc = document.getElementById('voteDesc').value;
+            const type = document.querySelector('input[name="voteType"]:checked').value;
+            const deadline = document.getElementById('voteDeadline').value;
+            
+            const options = Array.from(document.querySelectorAll('.option-input'))
+                .filter(input => input.value.trim())
+                .map(input => ({ text: input.value.trim(), img: '', votes: 0 }));
 
-// 渲染
-function updateUserUI(){
-  const auth = document.getElementById('authButtons')
-  const profile = document.getElementById('userProfile')
-  const adminBtn = document.getElementById('adminPanelBtn')
-  const nameEl = document.getElementById('userName')
-  const initial = document.getElementById('userInitial')
-  if(!currentUser){
-    auth.classList.remove('hidden')
-    profile.classList.add('hidden')
-    return
-  }
-  auth.classList.add('hidden')
-  profile.classList.remove('hidden')
-  nameEl.textContent = currentUser.username
-  initial.textContent = currentUser.username.charAt(0)
-  adminBtn.classList.toggle('hidden',!currentUser.isAdmin)
-  syncOnline()
-}
+            if (options.length < 2) return showToast('至少需要2个选项', 'danger');
 
-function renderVoteList(){
-  const container = document.getElementById('voteList')
-  if(votes.length===0){
-    container.innerHTML = '<div class="text-center p-6 text-gray-400">暂无投票，快去发起吧</div>'
-    return
-  }
-  container.innerHTML = votes.map(v=>`
-    <div class="bg-white rounded-xl shadow p-4 card-hover dark:bg-gray-800">
-      <h3 class="font-bold">${v.title}</h3>
-      <p class="text-sm text-gray-500 line-clamp-2 dark:text-gray-400">${v.desc}</p>
-      <div class="text-xs text-gray-400 mt-2">创建人：${v.creatorName}</div>
-      <button onclick="openVoteDetail('${v.id}')" class="btn-primary w-full mt-3 text-sm">查看投票</button>
-    </div>
-  `).join('')
-}
+            const newVote = {
+                id: 'v' + Date.now(),
+                title,
+                desc,
+                isMultiple: type === 'multiple',
+                deadline,
+                creatorId: currentUser.id,
+                creatorName: currentUser.realName,
+                options,
+                voters: []
+            };
 
-function renderComments(voteId){
-  const list = document.getElementById('commentList')
-  const arr = comments.filter(c=>c.voteId===voteId)
-  if(arr.length===0){
-    list.innerHTML = '<div class="text-gray-400 text-sm">暂无评论</div>'
-    return
-  }
-  list.innerHTML = arr.map(c=>`
-    <div class="border-b pb-2 dark:border-gray-700">
-      <div class="text-sm font-medium">${c.userName}</div>
-      <div class="text-sm dark:text-gray-300">${c.content}</div>
-    </div>
-  `).join('')
-}
+            votes.unshift(newVote);
+            localStorage.setItem('votes', JSON.stringify(votes));
+            document.getElementById('createVoteForm').reset();
+            renderVotes();
+            showView('homeView');
+            showToast('投票发布成功', 'primary');
+        }
 
-function openVoteDetail(vid){
-  const v = votes.find(x=>x.id===vid)
-  if(!v)return
-  showView('voteDetailView')
-  document.getElementById('detailTitle').textContent = v.title
-  document.getElementById('detailDesc').textContent = v.desc
-  const area = document.getElementById('voteOptionArea')
-  const delBtn = document.getElementById('deleteVoteBtn')
-  delBtn.classList.toggle('hidden',!(currentUser && (currentUser.isAdmin || currentUser.id===v.creatorId)))
-  delBtn.onclick = ()=>{ if(confirm('确定删除？')){
-    votes=votes.filter(x=>x.id!==vid)
-    saveVotes()
-    showView('homeView')
-    renderVoteList()
-    toast('已删除')
-  }}
-  area.innerHTML = v.options.map((opt,i)=>`
-    <label class="flex items-center gap-2 p-2 border rounded dark:border-gray-700">
-      <input type="${v.isMultiple?'checkbox':'radio'}" name="votePick" value="${i}">
-      ${opt.img?`<img src="${opt.img}" class="h-10 w-10 object-cover rounded">`:''}
-      <span>${opt.text}</span>
-    </label>
-  `).join('')
-  renderComments(vid)
-  document.getElementById('commentInputArea').classList.toggle('hidden',!currentUser)
-}
+        // 渲染投票列表
+        function renderVotes() {
+            const container = document.getElementById('votesList');
+            if (votes.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-10">
+                        <i class="fa fa-bar-chart text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-500">暂无投票，点击上方发起第一个投票</p>
+                    </div>`;
+                return;
+            }
 
-// 页面加载
-document.addEventListener('DOMContentLoaded',()=>{
-  updateUserUI()
-  renderVoteList()
-  syncOnline()
+            container.innerHTML = votes.map(vote => `
+                <div class="card">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold">${vote.title}</h3>
+                        <span class="badge ${vote.isMultiple ? 'bg-purple-500' : 'bg-blue-500'} text-white">
+                            ${vote.isMultiple ? '多选' : '单选'}
+                        </span>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">${vote.desc || '无描述'}</p>
+                    <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
+                        <span><i class="fa fa-user mr-1"></i>${vote.creatorName}</span>
+                        <span><i class="fa fa-clock-o mr-1"></i>${vote.deadline ? new Date(vote.deadline).toLocaleString() : '永久'}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="viewVoteDetail('${vote.id}')" class="btn-primary flex-1 text-center">查看详情</button>
+                        ${currentUser && (currentUser.isAdmin || currentUser.id === vote.creatorId) ? 
+                            `<button onclick="deleteVote('${vote.id}')" class="btn-danger flex-1">删除</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
 
-  // 菜单
-  document.getElementById('userMenuBtn').onclick=()=>{
-    document.getElementById('userMenu').classList.toggle('hidden')
-  }
+        // 查看投票详情
+        function viewVoteDetail(voteId) {
+            const vote = votes.find(v => v.id === voteId);
+            if (!vote) return;
+            
+            const container = document.getElementById('voteDetailContent');
+            const isVoted = currentUser && vote.voters.some(v => v.id === currentUser.id);
+            
+            container.innerHTML = `
+                <p class="text-gray-600 dark:text-gray-400 mb-6">${vote.desc || '无描述'}</p>
+                <div class="space-y-4 mb-6">
+                    ${vote.options.map((opt, idx) => `
+                        <div class="p-3 border rounded-lg ${isVoted ? 'opacity-80' : ''}">
+                            <label class="flex items-center justify-between">
+                                <span>${opt.text}</span>
+                                <span class="text-sm font-bold">${opt.votes} 票</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="text-sm text-gray-500 mb-4">
+                    <p>创建者: ${vote.creatorName}</p>
+                    <p>截止时间: ${vote.deadline ? new Date(vote.deadline).toLocaleString() : '永久有效'}</p>
+                </div>
+            `;
 
-  // 退出
-  document.getElementById('logoutBtn').onclick=()=>{
-    removeOnlineUser()
-    currentUser=null
-    localStorage.removeItem('currentUser')
-    updateUserUI()
-    showView('homeView')
-    toast('已退出')
-  }
+            showView('voteDetailView');
+        }
 
-  // 设置
-  document.getElementById('settingsBtn').onclick=()=>showView('settingsView')
-  document.getElementById('backFromSettings').onclick=()=>showView('homeView')
-  document.getElementById('darkModeToggle').onclick=toggleDark
-  document.getElementById('applyVip').onclick=()=>{
-    const code = document.getElementById('inputVipCode').value
-    if(code==='057712'){
-      if(!currentUser)return toast('请登录')
-      currentUser.role='VIP用户'
-      localStorage.setItem('currentUser',JSON.stringify(currentUser))
-      const u=users.find(x=>x.id===currentUser.id)
-      if(u)u.role='VIP用户'
-      saveUsers()
-      toast('VIP 激活成功')
-    }else{
-      toast('邀请码错误')
-    }
-  }
-  document.getElementById('submitFeedback').onclick=()=>{
-    const t=document.getElementById('feedbackText').value
-    if(!t)return toast('请输入反馈')
-    toast('反馈提交成功，感谢你的建议')
-    document.getElementById('feedbackText').value=''
-  }
+        // 删除投票
+        function deleteVote(voteId) {
+            if (!confirm('确定删除？')) return;
+            votes = votes.filter(v => v.id !== voteId);
+            localStorage.setItem('votes', JSON.stringify(votes));
+            renderVotes();
+            showToast('删除成功', 'danger');
+        }
 
-  // 管理员
-  document.getElementById('adminPanelBtn').onclick=()=>{
-    if(!currentUser || !currentUser.isAdmin)return toast('无权限')
-    showView('adminView')
-    document.getElementById('adminUserList').innerHTML=users.map(u=>`
-      <div class="p-2 border-b dark:border-gray-700">${u.username} | ${u.realName} | ${u.role}</div>
-    `).join('')
-    document.getElementById('adminVoteList').innerHTML=votes.map(v=>`
-      <div class="p-2 border-b flex justify-between dark:border-gray-700">
-        <span>${v.title}</span>
-        <button onclick="deleteVoteAdmin('${v.id}')" class="text-danger text-sm">删除</button>
-      </div>
-    `).join('')
-  }
-  document.getElementById('backFromAdmin').onclick=()=>showView('homeView')
-  window.deleteVoteAdmin=(vid)=>{
-    if(confirm('确定删除？')){
-      votes=votes.filter(x=>x.id!==vid)
-      saveVotes()
-      document.getElementById('adminVoteList').innerHTML=votes.map(v=>`
-        <div class="p-2 border-b flex justify-between dark:border-gray-700">
-          <span>${v.title}</span>
-          <button onclick="deleteVoteAdmin('${v.id}')" class="text-danger text-sm">删除</button>
-        </div>
-      `).join('')
-      toast('已删除')
-      renderVoteList()
-    }
-  }
+        // 更新UI
+        function updateUI() {
+            currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+            
+            if (currentUser) {
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('authButtons').classList.add('hidden');
+                document.getElementById('welcomeText').textContent = `你好, ${currentUser.realName}`;
+                document.getElementById('adminBtn').classList.toggle('hidden', !currentUser.isAdmin);
+            } else {
+                document.getElementById('userInfo').classList.add('hidden');
+                document.getElementById('authButtons').classList.remove('hidden');
+            }
+        }
 
-  // 登录注册
-  document.getElementById('loginBtn').onclick=()=>showView('loginView')
-  document.getElementById('registerBtn').onclick=()=>showView('registerView')
-  document.getElementById('goRegister').onclick=()=>showView('registerView')
-  document.getElementById('goLogin').onclick=()=>showView('loginView')
-  document.getElementById('backToList').onclick=()=>showView('homeView')
+        // 在线状态
+        function initOnlineStatus() {
+            setInterval(() => {
+                if (currentUser) {
+                    onlineUsers = onlineUsers.filter(u => Date.now() - u.time < 30000);
+                    if (!onlineUsers.some(u => u.id === currentUser.id)) {
+                        onlineUsers.push({
+                            id: currentUser.id,
+                            姓名: 当前用户.真实姓名,
+                            角色: 当前用户.角色,
+                            时间: 日期.现在()
+                        });
+                    }
+                }
+                document.getElementById('onlineCount').textContent = onlineUsers.length;
+            }, 5000);
+        }
 
-  // 角色切换
-  document.getElementById('regRole').onchange=e=>{
-    const v=e.target.value
-    document.getElementById('adminPwd').classList.toggle('hidden',v!=='管理员')
-    document.getElementById('vipCode').classList.toggle('hidden',v!=='VIP用户')
-  }
+        // 提示框
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transform transition-transform duration-300 translate-x-0';
+            toast.classList.add(type === 'primary' ? 'bg-primary' : type === 'danger' ? 'bg-danger' : 'bg-secondary');
+            toast.textContent = message;
+            setTimeout(() => toast.classList.add('translate-x-full'), 2000);
+        }
 
-  // 创建投票
-  document.getElementById('createVoteBtn').onclick=()=>{
-    if(!currentUser){toast('请登录');showView('loginView');return}
-    showView('createVoteView')
-    document.getElementById('deadline').value=new Date(Date.now()+86400000).toISOString().slice(0,16)
-  }
-  document.getElementById('cancelCreate').onclick=()=>showView('homeView')
-  document.getElementById('addOption').onclick=()=>{
-    const d=document.createElement('div')
-    d.className='flex gap-2 mb-2'
-    d.innerHTML=`
-      <input class="input-field optionText dark:bg-gray-700 dark:border-gray-600" placeholder="选项">
-      <input type="file" class="optionImg hidden" accept="image/*">
-      <button class="btn-outline imgUploadBtn"><i class="fa fa-image"></i></button>
-    `
-    document.getElementById('optionItems').appendChild(d)
-    d.querySelector('.imgUploadBtn').onclick=()=>d.querySelector('.optionImg').click()
-  }
-  document.querySelectorAll('.imgUploadBtn').forEach(btn=>{
-    btn.onclick=()=>btn.previousElementSibling.click()
-  })
+        // 添加选项
+        function addOption() {
+            const container = document.getElementById('voteOptions');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 mb-2';
+            div.innerHTML = `
+                <input type="text" class="input-field option-input" placeholder="选项 ${container.children.length + 1}" required>
+                <button type="button" class="btn-danger remove-option">-</button>
+            `;
+            容器.appendChild(div);
+        }
 
-  // 提交创建
-  document.getElementById('submitCreateVote').onclick=()=>{
-    const title=document.getElementById('voteTitle').value.trim()
-    const desc=document.getElementById('voteDesc').value.trim()
-    const isMultiple=document.getElementById('isMultiple').checked
-    const deadline=document.getElementById('deadline').value
-    const texts=Array.from(document.querySelectorAll('.optionText')).map(i=>i.value.trim())
-    const files=Array.from(document.querySelectorAll('.optionImg'))
-    if(!title || texts.filter(Boolean).length<2)return toast('标题+至少2个选项')
-    const opts=[]
-    texts.forEach((t,i)=>{
-      if(!t)return
-      const img=files[i]?.files?.[0]?URL.createObjectURL(files[i].files[0]):null
-      opts.push({text:t,img,votes:0})
-    })
-    votes.unshift({
-      id:'v'+Date.now(),title,desc,isMultiple,deadline,
-      creatorId:currentUser.id,creatorName:currentUser.username,
-      options:opts,voters:[]
-    })
-    saveVotes()
-    showView('homeView')
-    renderVoteList()
-    toast('发起成功')
-  }
-
-  // 登录
-  document.getElementById('doLogin').onclick=()=>{
-    const u=document.getElementById('loginUser').value
-    const p=document.getElementById('loginPwd').value
-    const user=users.find(x=>x.username===u && x.pwd===p)
-    if(!user)return toast('账号或密码错误')
-    currentUser=user
-    localStorage.setItem('currentUser',JSON.stringify(user))
-    updateUserUI()
-    initOnline()
-    showView('homeView')
-    toast('登录成功')
-  }
-
-  // 注册
-  document.getElementById('doRegister').onclick=()=>{
-    const username=document.getElementById('regUser').value.trim()
-    const realName=document.getElementById('regRealName').value.trim()
-    const pwd=document.getElementById('regPwd').value
-    const role=document.getElementById('regRole').value
-    const adminPwd=document.getElementById('adminPwd').value
-    const vipCode=document.getElementById('vipCode').value
-    if(!username || !realName || !pwd)return toast('必填项不能为空')
-    if(users.find(x=>x.username===username))return toast('用户名已存在')
-    if(role==='管理员' && adminPwd!=='525212')return toast('管理员密码错误')
-    if(role==='VIP用户' && vipCode!=='057712')return toast('邀请码错误')
-    const user={
-      id:'u'+Date.now(),username,realName,pwd,role,
-      isAdmin:role==='管理员'
-    }
-    users.push(user)
-    saveUsers()
-    toast('注册成功，请登录')
-    showView('loginView')
-  }
-
-  // 投票
-  document.getElementById('submitMyVote').onclick=()=>{
-    if(!currentUser)return toast('请登录')
-    const title=document.getElementById('detailTitle').textContent
-    const v=votes.find(x=>x.title===title)
-    if(!v)return
-    if(v.voters.some(x=>x.id===currentUser.id))return toast('已投过票')
-    const picks=Array.from(document.querySelectorAll('input[name="votePick"]:checked')).map(i=>+i.value)
-    if(picks.length===0)return toast('请选择')
-    picks.forEach(i=>v.options[i].votes+=1)
-    v.voters.push({id:currentUser.id,realName:currentUser.realName})
-    saveVotes()
-    openVoteDetail(v.id)
-    toast('投票成功')
-  }
-
-  // 评论
-  document.getElementById('commentBtn').onclick=()=>{
-    if(!currentUser)return toast('请登录')
-    document.getElementById('commentText').focus()
-  }
-  document.getElementById('submitComment').onclick=()=>{
-    if(!currentUser)return toast('请登录')
-    const txt=document.getElementById('commentText').value.trim()
-    if(!txt)return toast('请输入评论')
-    const title=document.getElementById('detailTitle').textContent
-    const v=votes.find(x=>x.title===title)
-    if(!v)return
-    comments.push({
-      id:'c'+Date.now(),voteId:v.id,
-      userId:currentUser.id,userName:currentUser.realName,
-      content:txt,time:new Date().toLocaleString()
-    })
-    saveComments()
-    document.getElementById('commentText').value=''
-    renderComments(v.id)
-    toast('评论成功')
-  }
-})
-</script>
+        // 删除选项
+        函数 removeOption(按钮) {
+            const container = document.getElementById('voteOptions');
+            如果 (容器.子节点.长度 > 2) 按钮.父元素.移除();
+        }
+    </script>
 </body>
 </html>
